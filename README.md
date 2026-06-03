@@ -1,6 +1,6 @@
 # Heart Disease Prediction
 
-A machine learning notebook for predicting heart disease from clinical tabular data.
+A small machine learning project for predicting heart disease from clinical tabular data.
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white)
@@ -10,41 +10,40 @@ A machine learning notebook for predicting heart disease from clinical tabular d
 
 ## Overview
 
-This repository contains a Jupyter notebook that explores a heart disease dataset and compares several classification models. The goal is to predict the `target` column, where `0` represents no heart disease and `1` represents heart disease.
+This repository explores a heart disease dataset and compares several classification models. The target column is `target`, where `0` represents no heart disease and `1` represents heart disease.
 
-The notebook covers:
-
-- loading the dataset
-- checking missing values
-- exploring feature distributions and correlations
-- encoding categorical variables
-- scaling numeric features
-- training four classifiers
-- comparing model accuracy
-- saving a trained SVC model with pickle
-
-The dataset source mentioned in the notebook is Kaggle: `ronitf/heart-disease-uci`.
+The project includes both the original notebook workflow and a small Python package for repeatable training and prediction.
 
 ## Repository Contents
 
 ```text
 Heart_Disease_Prediction/
-|-- Heart_Disease_Prediction.ipynb
+|-- data/
+|   |-- test.csv
+|   `-- train.csv
+|-- images/
+|   |-- correlation-matrix.png
+|   |-- decision-tree-max-features-comparison.png
+|   |-- feature-histograms.png
+|   |-- knn-score-comparison.png
+|   |-- missing-value-bar-chart.png
+|   |-- missing-value-matrix.png
+|   |-- random-forest-estimator-comparison.png
+|   |-- svc-kernel-comparison.png
+|   `-- target-class-distribution.png
+|-- notebooks/
+|   `-- heart_disease_prediction.ipynb
+|-- src/
+|   |-- __init__.py
+|   |-- predict.py
+|   |-- preprocess.py
+|   `-- train.py
+|-- tests/
+|   `-- test_preprocess.py
+|-- .gitignore
 |-- LICENSE
 |-- README.md
-|-- requirements.txt
-|-- test.csv
-|-- train.csv
-`-- images/
-    |-- correlation-matrix.png
-    |-- decision-tree-max-features-comparison.png
-    |-- feature-histograms.png
-    |-- knn-score-comparison.png
-    |-- missing-value-bar-chart.png
-    |-- missing-value-matrix.png
-    |-- random-forest-estimator-comparison.png
-    |-- svc-kernel-comparison.png
-    `-- target-class-distribution.png
+`-- requirements.txt
 ```
 
 ## Dataset
@@ -53,16 +52,12 @@ The repository includes two CSV files with the same 14 columns.
 
 | File | Rows | Columns |
 | --- | ---: | ---: |
-| `train.csv` | 1,024 | 14 |
-| `test.csv` | 303 | 14 |
+| `data/train.csv` | 1,024 | 14 |
+| `data/test.csv` | 303 | 14 |
 
-The notebook loads `test.csv` and then creates a train/test split from that file using:
+Both files contain 13 input features and 1 target column. No missing values were found in either file.
 
-```python
-train_test_split(X, y, test_size=0.33, random_state=0)
-```
-
-Both CSV files contain 13 input features and 1 target column. No missing values were found in either file.
+The notebook source mentions Kaggle dataset `ronitf/heart-disease-uci`.
 
 ## Columns
 
@@ -85,14 +80,14 @@ Both CSV files contain 13 input features and 1 target column. No missing values 
 
 ## Target Distribution
 
-### `train.csv`
+### `data/train.csv`
 
 | Target | Count | Percentage |
 | --- | ---: | ---: |
 | `0` | 498 | 48.63% |
 | `1` | 526 | 51.37% |
 
-### `test.csv`
+### `data/test.csv`
 
 | Target | Count | Percentage |
 | --- | ---: | ---: |
@@ -104,44 +99,42 @@ Both CSV files contain 13 input features and 1 target column. No missing values 
 ```text
 Load CSV data
   |
-Inspect rows, columns, and missing values
+Validate feature columns
   |
-Plot missing value summaries, histograms, and correlations
+Encode categorical features
   |
-One-hot encode categorical columns
-  |
-Scale numeric columns
-  |
-Split features and target
+Scale numeric features
   |
 Train classification models
   |
-Compare accuracy scores
+Compare evaluation metrics
   |
-Save the SVC model with pickle
+Save the best sklearn pipeline
+  |
+Run predictions with the saved pipeline
 ```
 
 ## Preprocessing
 
-The notebook applies one-hot encoding to these columns:
+The training script uses a `ColumnTransformer`.
 
-```text
-sex, cp, fbs, restecg, exang, slope, ca, thal
-```
-
-It scales these numeric columns with `StandardScaler`:
+Numeric features are scaled with `StandardScaler`:
 
 ```text
 age, trestbps, chol, thalach, oldpeak
 ```
 
-After encoding, the model input has 30 features.
+Categorical features are one-hot encoded with `OneHotEncoder(handle_unknown="ignore")`:
+
+```text
+sex, cp, fbs, restecg, exang, slope, ca, thal
+```
 
 ## Exploratory Analysis
 
 The notebook includes missing value plots, a correlation matrix, histograms for all columns, and a target class distribution chart.
 
-In `test.csv`, the strongest positive correlations with `target` are:
+In `data/test.csv`, the strongest positive correlations with `target` are:
 
 | Feature | Correlation |
 | --- | ---: |
@@ -161,14 +154,25 @@ The strongest negative correlations with `target` are:
 
 ## Models
 
-| Model | Parameters tested |
+The notebook compares:
+
+| Model | Parameters tested in notebook |
 | --- | --- |
 | K Neighbors Classifier | `n_neighbors` from 1 to 20 |
 | Support Vector Classifier | `linear`, `poly`, `rbf`, and `sigmoid` kernels |
 | Decision Tree Classifier | `max_features` from 1 to 30 with `random_state=0` |
 | Random Forest Classifier | `n_estimators` of 10, 100, 200, 500, and 1000 with `random_state=0` |
 
-## Results
+The Python training script compares the same model families with fixed settings selected from the notebook:
+
+| Model key | Implementation |
+| --- | --- |
+| `knn` | `KNeighborsClassifier(n_neighbors=8)` |
+| `svc_linear` | `SVC(kernel="linear", probability=True, random_state=0)` |
+| `decision_tree` | `DecisionTreeClassifier(max_features=18, random_state=0)` |
+| `random_forest` | `RandomForestClassifier(n_estimators=100, random_state=0)` |
+
+## Notebook Results
 
 The scores below are the accuracy values saved in the notebook output.
 
@@ -254,34 +258,65 @@ pip install -r requirements.txt
 
 ## Running the Notebook
 
-Start Jupyter:
-
 ```bash
-jupyter notebook
+jupyter notebook notebooks/heart_disease_prediction.ipynb
 ```
 
-Open and run:
+## Training From Python
+
+```bash
+python src/train.py --data data/train.csv
+```
+
+This writes:
 
 ```text
-Heart_Disease_Prediction.ipynb
+models/heart_disease_pipeline.joblib
+reports/model_metrics.csv
+```
+
+Those generated files are ignored by git.
+
+## Running Predictions
+
+Train the pipeline first:
+
+```bash
+python src/train.py --data data/train.csv
+```
+
+Then run predictions on a CSV file with the same feature columns:
+
+```bash
+python src/predict.py --input data/test.csv
+```
+
+To save predictions:
+
+```bash
+python src/predict.py --input data/test.csv --output reports/predictions.csv
+```
+
+## Running Tests
+
+```bash
+pytest
 ```
 
 ## Current Limitations
 
-- The notebook loads `test.csv` for analysis and training instead of using `train.csv` as the main training dataset.
-- The final pickle cell saves the last trained SVC model as `svc_classifier.pkl`.
-- The final prediction example raises a shape mismatch error because it passes 1 input feature to a model trained on 30 encoded features.
-- The notebook reports accuracy only. It does not include precision, recall, F1 score, ROC AUC, or a confusion matrix for the trained models.
+- The notebook still reports accuracy only. The Python training script adds more metrics.
+- The saved notebook outputs come from the original notebook run.
+- The project does not include a web app or API.
+- Model artifacts are generated locally and are not committed.
 
 ## Roadmap
 
-- Move preprocessing and training code into Python scripts
-- Build a single sklearn pipeline for preprocessing and inference
-- Save the fitted preprocessing steps with the trained model
-- Add precision, recall, F1 score, ROC AUC, and confusion matrix evaluation
-- Add tests for preprocessing and prediction input shape
+- Add confusion matrix and ROC curve plots from the Python training script
+- Add cross-validation for model comparison
 - Add a small API for prediction
 - Add Docker support for reproducible local runs
+- Add a short example input file for inference
 
 ## License
 
